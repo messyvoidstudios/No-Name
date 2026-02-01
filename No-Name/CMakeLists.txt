@@ -1,12 +1,12 @@
-﻿# CMakeList.txt : CMake project for No-Name, include source and define
-# project specific logic here.
-#
+﻿project(No-Name)
 
-# Add source to this project's executable.
-add_executable (No-Name "No-Name.cpp" )
+set(CMAKE_CXX_STANDARD 17)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET No-Name PROPERTY CXX_STANDARD 20)
-endif()
+include_directories("C:/SFML-3.0.0+32-Bit/include")
 
-# TODO: Add tests and install targets if needed.
+link_directories("C:/SFML-3.0.0+32-Bit/lib")
+
+add_executable (
+	No-Name "No-Name.cpp")
+
+target_link_libraries(No-Name sfml-graphics sfml-window sfml-system sfml-audio sfml-network)

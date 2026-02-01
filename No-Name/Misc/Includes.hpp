@@ -22,7 +22,6 @@
 #include <typeindex>
 #include <utility>
 #include <vector>
-#include <Windows.h>
 
 #include "json.hpp"
 
