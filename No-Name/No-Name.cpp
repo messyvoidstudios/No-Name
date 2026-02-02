@@ -9,6 +9,8 @@
 
 #include "Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
 
+#include "UI/Text.hpp"
+
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({ 1920, 1080 }), "No Name", sf::State::Fullscreen);
@@ -41,6 +43,8 @@ int main() {
             if (cavern.front().depth <= -1.0f) {
                 cavern.pop_front();
                 cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.0f });
+                lWalked++;
+                std::cout << lWalked << " layers walked" << std::endl;
             }
         }
 
@@ -102,6 +106,9 @@ int main() {
         window.draw(dustParticles);
 
         uBlinks(blink, deltaTime, window);
+
+        checkWalkDistance();
+		uTextbox(deltaTime, window);
 
         window.display();
 
