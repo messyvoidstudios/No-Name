@@ -1,10 +1,13 @@
-﻿#include "Misc/Includes.hpp"
+﻿#include "Misc/Audio.hpp"
+#include "Misc/Includes.hpp"
 #include "Misc/Functions.hpp"
 #include "Misc/Variables.hpp"
 
-#include "Chapter-1/Effects/Dust.hpp"
+#include "Chapters/Features/Blink.hpp"
 
-#include "Chapter-1/Sequence-Cave/Cave.hpp"
+#include "Chapters/Chapter-1/Effects/Dust.hpp"
+
+#include "Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
 
 
 int main() {
@@ -14,45 +17,41 @@ int main() {
     sf::Vector2f centre = { window.getSize().x / 2.f, window.getSize().y / 2.f };
 
     sf::Clock elapsedClock;
-    
-    std::deque<CLayer> cavern;
-	std::vector<Dust> dust;
+    sf::Clock deltaClock;
 
-    for (int i = 0; i < mLayers; ++i) {
-        cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), (float)i });
-    }
-
-    for (int i = 0; i < 100; ++i) {
-        dust.push_back({ {rand(-800, 800), rand(-500, 500)}, rand(0, 10), rand(1.2f, 2.0f), rand(0, 6.28f) });
-    }
-
+    initDust();
+    initCavern();
+    initAudio();
     while (window.isOpen()) {
         float elapsedTime = elapsedClock.getElapsedTime().asSeconds();
+        float deltaTime = deltaClock.restart().asSeconds();
+        playMusic("cave");
 
         sf::Vector2f bobOffset(0, 0);
 
-        bool isWalking = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) isWalking = true;
+		else isWalking = false;
 
         if (isWalking) {
             for (auto& layer : cavern) layer.depth -= walkSpd;
             bobbing += 0.12f;
             bobOffset.x = std::cos(bobbing * 0.5f) * 12.f;
             bobOffset.y = std::sin(bobbing) * 8.f;
+
+            if (cavern.front().depth <= -1.0f) {
+                cavern.pop_front();
+                cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.0f });
+            }
         }
 
         for (auto& d : dust) {
-            float currentSpeed = isWalking ? (walkSpd * d.spdMult) : dustDrift;
+            float currentSpeed = isWalking ? (walkSpd * d.spd) : dustDrift;
             d.depth -= currentSpeed;
 
             if (d.depth < 0) {
                 d.depth = 10.f;
                 d.pos = { rand(-1000, 1000), rand(-600, 600) };
             }
-        }
-
-        if (cavern.front().depth <= -1.0f) {
-            cavern.pop_front();
-            cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.0f });
         }
 
         window.clear(sf::Color::Black);
@@ -62,6 +61,7 @@ int main() {
 
             float scale = std::pow(0.75f, std::max(0.01f, layer.depth));
             float lightFactor = std::pow(0.7f, std::max(0.01f, layer.depth));
+            float pulse = (std::sin(elapsedTime * 0.5f) + 1.0f) / 2.0f;
 
             float alphaFactor = 1.0f;
             if (layer.depth < 1.5f) {
@@ -71,7 +71,7 @@ int main() {
                 alphaFactor = std::clamp((mLayers - layer.depth) / 3.0f, 0.0f, 1.0f);
             }
 
-            uint8_t rgb = static_cast<uint8_t>(255 * lightFactor);
+            uint8_t rgb = static_cast<uint8_t>(255 * lightFactor * (0.5f + pulse * 0.5f));
             uint8_t a = static_cast<uint8_t>(255 * alphaFactor);
 
             for (size_t v = 0; v < layer.vArr.getVertexCount(); ++v) {
@@ -100,6 +100,8 @@ int main() {
             dustParticles.append(sf::Vertex({ fPos, sf::Color(200, 200, 200, (uint8_t)(255 * a)) }));
         }
         window.draw(dustParticles);
+
+        uBlinks(blink, deltaTime, window);
 
         window.display();
 
