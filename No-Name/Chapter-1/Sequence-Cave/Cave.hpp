@@ -2,15 +2,14 @@
 #include "../../Misc/Includes.hpp"
 #include "../../Misc/Functions.hpp"
 
-struct CaveLayer {
+struct CLayer {
     sf::VertexArray vArr;
     float depth;
 };
 
 inline sf::VertexArray layer(float w, float h, sf::Color c) {
     sf::VertexArray l(sf::PrimitiveType::LineStrip);
-    int detail = 15;
-    int l_detail = detail * 4;
+    int l_detail = 60;
 
     for (int i = 0; i <= l_detail; ++i) {
         float angle = (static_cast<float>(i) / l_detail) * 2.f * 3.14159f;
