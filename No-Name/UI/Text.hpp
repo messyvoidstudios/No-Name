@@ -2,37 +2,17 @@
 #include "../Misc/Includes.hpp"
 #include "../Misc/Variables.hpp"
 
+#include "../Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
+
 struct Textbox {
 	std::string content;
 	float duration = 0.f;
     bool triggered = false;
 };
 
-struct CMilestone {
-    std::string text;
-    float duration;
-    bool triggered = false;
-};
-
 inline std::queue<Textbox> textQueue;
 inline Textbox currentText;
-bool isDisplaying = false;
-
-inline std::map<int, CMilestone> caveMilestones = {
-    {160, {"Ugh... how much longer?!", 4.0f}},
-    {200, {"I'm starting to believe nothing is here...", 5.0f}},
-    {220, {"Can't turn back now...", 4.0f}},
-    {240, {"Is that... light up ahead?", 5.0f}}
-};
-
-inline void checkWalkDistance() {
-    for (auto& [distance, milestone] : caveMilestones) {
-        if (lWalked >= distance && !milestone.triggered) {
-            textQueue.push({ milestone.text, milestone.duration });
-            milestone.triggered = true;
-        }
-    }
-}
+inline bool isDisplaying = false;
 
 inline void uTextbox(float dt, sf::RenderWindow& window) {
     if (!isDisplaying && !textQueue.empty()) {

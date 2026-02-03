@@ -8,6 +8,7 @@
 #include "Chapters/Chapter-1/Effects/Dust.hpp"
 
 #include "Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
+#include "Chapters/Chapter-1/Sequence-Cave/Shining.hpp"
 
 #include "UI/Text.hpp"
 
@@ -44,7 +45,6 @@ int main() {
                 cavern.pop_front();
                 cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.0f });
                 lWalked++;
-                std::cout << lWalked << " layers walked" << std::endl;
             }
         }
 
@@ -75,11 +75,15 @@ int main() {
                 alphaFactor = std::clamp((mLayers - layer.depth) / 3.0f, 0.0f, 1.0f);
             }
 
-            uint8_t rgb = static_cast<uint8_t>(255 * lightFactor * (0.5f + pulse * 0.5f));
+            uint8_t bColour = static_cast<uint8_t>(255 * lightFactor * (0.5f + pulse * 0.5f));
             uint8_t a = static_cast<uint8_t>(255 * alphaFactor);
 
+            sf::Color c;
+            if (shining) c = sf::Color(bColour, bColour * 0.2f, bColour * 0.2f, a);
+            else c = sf::Color(bColour, bColour, bColour, a);
+
             for (size_t v = 0; v < layer.vArr.getVertexCount(); ++v) {
-                layer.vArr[v].color = sf::Color(rgb, rgb, rgb, a);
+                layer.vArr[v].color = c;
             }
 
             sf::Transform tx;
@@ -106,9 +110,15 @@ int main() {
         window.draw(dustParticles);
 
         uBlinks(blink, deltaTime, window);
+        uShining(blink, deltaTime, window, bobOffset);
 
-        checkWalkDistance();
+        checkDist();
 		uTextbox(deltaTime, window);
+
+        if (deadFromShining) {
+            window.clear(sf::Color(40, 0, 0));
+            window.display();
+        }
 
         window.display();
 
