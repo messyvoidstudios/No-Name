@@ -2,8 +2,6 @@
 #include "../Misc/Includes.hpp"
 #include "../Misc/Variables.hpp"
 
-#include "../Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
-
 struct Textbox {
 	std::string content;
 	float duration = 0.f;
