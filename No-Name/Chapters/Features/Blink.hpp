@@ -5,7 +5,7 @@ struct Blinking {
     float progress = 0.f;
     bool closing = true;
     bool active = false;
-    float spd = 5.0f;
+    float spd = 5.f;
     float timer = 0.f;
     const float interval = 30.f;
 };

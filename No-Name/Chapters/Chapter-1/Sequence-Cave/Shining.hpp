@@ -41,6 +41,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
                 cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), (float)i });
             }
             caveRegenerated = true;
+            caveDistort = true;
         }
     }
 
@@ -50,10 +51,10 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
         shiningDepth -= 1.0f * dt;
         shiningGrace -= dt;
 
-        static bool messagePushed = false;
-        if (!messagePushed) {
+        static bool tPushed = false;
+        if (!tPushed) {
             textQueue.push({ "The light is approaching... CLOSE YOUR EYES!!!", 3.f });
-            messagePushed = true;
+            tPushed = true;
         }
     }
 
@@ -66,14 +67,15 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
     if (shiningDepth <= 0.2f) {
         shining = false;
         deadFromShining = true;
+        textQueue.push({ "AHH!", 2.f });
         return;
     }
 
     float t = std::clamp((10.f - shiningDepth) / 10.f, 0.0f, 1.0f);
     uint8_t a = static_cast<uint8_t>(20.f + (t * (255.f - 20.f)));
     float pulse = std::abs(std::sin(shiningGrace * 8.f));
-    uint8_t intensity = static_cast<uint8_t>(200 + (55 * pulse));
-    sf::Color color(255, 255, intensity, a);
+    uint8_t intensity = static_cast<uint8_t>(0 + (55 * pulse));
+    sf::Color color(255, 0, intensity, a);
 
     std::vector<sf::Vector2f> smileOffsets = {
         {0, 0}, {-150, -100}, {180, -80}, {-120, 150}, {140, 120}
