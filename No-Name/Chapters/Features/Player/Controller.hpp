@@ -69,7 +69,7 @@ inline void init2X(sf::RenderWindow& window) {
 
         window.draw(c.chunk, tx);
 
-        if (!c.eyesDisappeared && c.eyes.getVertexCount() > 0) {
+        if (!c.showEyes && c.eyes.getVertexCount() > 0) {
             window.draw(c.eyes, tx);
         }
     }
