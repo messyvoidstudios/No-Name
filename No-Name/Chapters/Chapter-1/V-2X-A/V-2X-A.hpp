@@ -18,17 +18,23 @@ inline ChunkBounds cBounds;
 
 inline std::vector<ChunkData> activeChunks;
 
-inline void dTree(sf::VertexArray& va, sf::Vector2f pos, float scale) {
+inline void dTree(sf::VertexArray& tree, sf::Vector2f pos, float scale) {
     sf::Color c = sf::Color(40, 40, 40);
 
-    va.append(sf::Vertex({ { pos.x, pos.y }, c }));
-    va.append(sf::Vertex({ { pos.x, pos.y - (20.f * scale) }, c }));
+    tree.append(sf::Vertex({ { pos.x, pos.y }, c }));
+    tree.append(sf::Vertex({ { pos.x, pos.y - (20.f * scale) }, c }));
 
-    va.append(sf::Vertex({ { pos.x, pos.y - (10.f * scale) }, c }));
-    va.append(sf::Vertex({ { pos.x - (10.f * scale), pos.y - (18.f * scale) }, c }));
+    tree.append(sf::Vertex({ { pos.x, pos.y - (10.f * scale) }, c }));
+    tree.append(sf::Vertex({ { pos.x - (10.f * scale), pos.y - (18.f * scale) }, c }));
 
-    va.append(sf::Vertex({ { pos.x, pos.y - (15.f * scale) }, c }));
-    va.append(sf::Vertex({ { pos.x + (8.f * scale), pos.y - (22.f * scale) }, c }));
+    tree.append(sf::Vertex({ { pos.x, pos.y - (15.f * scale) }, c }));
+    tree.append(sf::Vertex({ { pos.x + (8.f * scale), pos.y - (22.f * scale) }, c }));
+}
+
+inline void dGrass(sf::VertexArray& grass, sf::Vector2f pos, float scale) {
+    sf::Color grassC(20, 20, 20);
+    grass.append(sf::Vertex({ { pos.x, pos.y }, grassC }));
+    grass.append(sf::Vertex({ { pos.x + rand(-3.f, 3.f), pos.y - scale }, grassC }));
 }
 
 inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
@@ -66,14 +72,31 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
         ch.append(sf::Vertex({ { fx - 10, fy }, fireC })); ch.append(sf::Vertex({ { fx, fy - 10 }, fireC }));
     }
 
-    int trees = 2 + (std::rand() % 3);
-    for (int i = 0; i < trees; ++i) {
-        sf::Vector2f randPos(rand(20.f, size - 20.f), rand(20.f, size - 20.f));
-        if (type == Chunks::CAMP && std::abs(randPos.x - size / 2.f) < 60) continue;
+    int treeMax = 3;
+    float treeScaleM = 0.7f;
+    sf::Color forestColor = sf::Color(40, 40, 40);
 
-        dTree(ch, randPos, rand(0.7f, 1.2f));
+    if (type == Chunks::FOREST) {
+        treeMax = 15;
+        treeScaleM = 1.0f;
     }
 
+    int trees = 2 + (std::rand() % treeMax);
+    for (int i = 0; i < trees; ++i) {
+        sf::Vector2f randPos(rand(10.f, size - 10.f), rand(10.f, size - 10.f));
+
+        if (type == Chunks::CAMP && std::abs(randPos.x - size / 2.f) < 60) continue;
+
+        float s = rand(treeScaleM, 1.5f);
+        dTree(ch, randPos, s);
+    }
+
+    int grassMult = (type == Chunks::FOREST) ? 3 : 1;
+    int grassBlades = (15 + (std::rand() % 20)) * grassMult;
+    for (int i = 0; i < grassBlades; ++i) {
+        sf::Vector2f gPos(rand(5.f, size - 5.f), rand(5.f, size - 5.f));
+        dGrass(ch, gPos, rand(5.f, 12.f));
+    }
     return ch;
 }
 
@@ -107,11 +130,23 @@ void rChunks(sf::Vector2i chPos) {
 
             if (!exists) {
                 Chunks t = Chunks::BASIC;
-                float r = rand(0.f, 100.f);
-                if (r > 99) t = Chunks::PIT;
-                else if (r > 98) t = Chunks::CAMP;
 
-                activeChunks.push_back({ chunk(t, chSize, sf::Color::White), t, {x, y} });
+                int neighbours = 0;
+                for (const auto& existing : activeChunks) {
+                    if (existing.type == Chunks::FOREST) {
+                        if (std::abs(existing.chPos.x - x) <= 1 && std::abs(existing.chPos.y - y) <= 1) {
+                            neighbours++;
+                        }
+                    }
+                }
+
+                float r = rand(0.f, 100.f);
+                float fChance = (neighbours > 0) ? 40.f : 97.f;
+                if (r > 99.5f) t = Chunks::PIT;
+                else if (r > 98.5f) t = Chunks::CAMP;
+                else if (r > fChance) t = Chunks::FOREST;
+
+                activeChunks.push_back({ chunk(t, chSize, sf::Color::Transparent), t, {x, y} });
             }
         }
     }
