@@ -73,23 +73,23 @@ inline void uCavern(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) 
         auto& layer = cavern[i];
 
         float scale = std::pow(0.75f, std::max(0.01f, layer.depth));
-        float lightFactor = std::pow(0.7f, std::max(0.01f, layer.depth));
+        float lFac = std::pow(0.7f, std::max(0.01f, layer.depth));
         float pulse = (std::sin(et * 0.5f) + 1.0f) / 2.0f;
 
-        float alphaFactor = 1.0f;
+        float aFac = 1.0f;
         if (layer.depth < 1.5f) {
-            alphaFactor = std::clamp((layer.depth - 0.2f) / 1.3f, 0.0f, 1.0f);
+            aFac = std::clamp((layer.depth - 0.2f) / 1.3f, 0.0f, 1.0f);
         }
         else if (layer.depth > (mLayers - 3)) {
-            alphaFactor = std::clamp((mLayers - layer.depth) / 3.0f, 0.0f, 1.0f);
+            aFac = std::clamp((mLayers - layer.depth) / 3.0f, 0.0f, 1.0f);
         }
 
-        uint8_t bColour = static_cast<uint8_t>(255 * lightFactor * (0.5f + pulse * 0.5f));
-        uint8_t a = static_cast<uint8_t>(255 * alphaFactor);
+        uint8_t col = static_cast<uint8_t>(255 * lFac * (0.5f + pulse * 0.5f));
+        uint8_t a = static_cast<uint8_t>(255 * aFac);
 
         sf::Color c;
-        if (shining) c = sf::Color(bColour, bColour * 0.2f, bColour * 0.2f, a);
-        else c = sf::Color(bColour, bColour, bColour, a);
+        if (shining) c = sf::Color(col, col * 0.2f, col * 0.2f, a);
+        else c = sf::Color(col, col, col, a);
 
         for (size_t v = 0; v < layer.cave.getVertexCount(); ++v) {
             layer.cave[v].color = c;

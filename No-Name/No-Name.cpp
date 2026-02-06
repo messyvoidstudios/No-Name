@@ -32,11 +32,12 @@ int main() {
     while (window.isOpen()) {
         float elapsedTime = elapsedClock.getElapsedTime().asSeconds();
         float deltaTime = deltaClock.restart().asSeconds();
-        static float lapsed = 0.f;
 
         window.clear(sf::Color::Black);
 
         if (currentProg == Ch1Progress::SEQUENCE1) {
+            static float lapsed = 0.f;
+
             if (!caveDistort) playMusic("cave");
             ambienceRandom();
 
@@ -101,6 +102,21 @@ int main() {
                 init2X(window);
 
                 uBlinks(blink, deltaTime, window);
+            }
+        }
+
+        else if (currentProg == Ch1Progress::SEQUENCE2) {
+            static bool initialized = false;
+            static float lapsed = 0.f;
+
+            if (!initialized) {
+                textQueue.push({ "Back under we go.", 3.f });
+                initialized = true;
+            }
+
+            if (lapsed <= 2.f) {
+                blind(window);
+                lapsed += deltaTime;
             }
         }
 
