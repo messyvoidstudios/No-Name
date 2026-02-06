@@ -8,7 +8,7 @@
 #include "../../../UI/Text.hpp"
 
 struct CLayer {
-    sf::VertexArray vArr;
+    sf::VertexArray cave;
     float depth;
 };
 
@@ -91,8 +91,8 @@ inline void uCavern(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) 
         if (shining) c = sf::Color(bColour, bColour * 0.2f, bColour * 0.2f, a);
         else c = sf::Color(bColour, bColour, bColour, a);
 
-        for (size_t v = 0; v < layer.vArr.getVertexCount(); ++v) {
-            layer.vArr[v].color = c;
+        for (size_t v = 0; v < layer.cave.getVertexCount(); ++v) {
+            layer.cave[v].color = c;
         }
 
         sf::Transform tx;
@@ -101,7 +101,7 @@ inline void uCavern(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) 
         float drift = std::max(0.f, layer.depth);
         tx.translate({ drift * 10.f, drift * 5.f });
 
-        window.draw(layer.vArr, tx);
+        window.draw(layer.cave, tx);
     }
 
     if (lWalked == 234) {
