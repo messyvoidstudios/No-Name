@@ -3,6 +3,8 @@
 #include "Misc/Includes.hpp"
 #include "Misc/Variables.hpp"
 
+#include "Chapters/Features/Player/Controller.hpp"
+
 #include "Chapters/Features/Blink.hpp"
 #include "Chapters/Features/Fracture.hpp"
 #include "Chapters/Features/Inventory.hpp"
@@ -74,10 +76,31 @@ int main() {
         }
 
         else if (currentProg == Ch1Progress::V_2X_A) {
-            textQueue.push({ "You've entered V_2X_A", 2.f });
+            static bool initialized = false;
+            static float lapsed = 0.f;
+
+            if (!initialized) {
+                textQueue.push({ "The air is cold. The walls are gone.", 3.f });
+
+                p.pos = { 0.f, 0.f };
+                p.chunk = { 0, 0 };
+                rChunks(p.chunk);
+
+                initialized = true;
+            }
+
             if (lapsed <= 2.f) {
                 blind(window);
                 lapsed += deltaTime;
+            }
+            else {
+                uPlayer(deltaTime);
+                uChunks(p.pos);
+                window.clear(sf::Color(5, 5, 10));
+
+                init2X(window);
+
+                uBlinks(blink, deltaTime, window);
             }
         }
 

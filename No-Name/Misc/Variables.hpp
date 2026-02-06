@@ -24,7 +24,7 @@ enum class Ch1Progress {
 	V_2Y_A,
 	SEQUENCEF
 };
-inline Ch1Progress currentProg = Ch1Progress::SEQUENCE1;
+inline Ch1Progress currentProg = Ch1Progress::V_2X_A;
 
 // Cave shenanigans
 inline int l_detail = 60;
@@ -41,17 +41,52 @@ inline bool caveDistort = false;
 inline float dustDrift = 0.005f;
 
 // Player variables
-inline int hp = 5;
-inline int sanity = 10;
+inline int hp = 5; // Hitpoints, obviously
+inline int shield = 0; // Shield, max 1 (essentially +1 hp); ignored for Brutal
+inline int sanity = 10; // Basic psychological horror mechanic, realistically
+inline float hallucinations = 0.f; // Hallucinations ramp up with lower sanity, 1.f max
 
 inline float walkSpd = 0.01f;
 inline float bobbing = 0.f;
 inline sf::Vector2f bobOffset(0, 0);
 
 inline bool isWalking = false; // Specifically for the Cave Sequence
-inline bool isBlinking = false;
+inline bool isBlinking = false; // If the player is blinking (used for reactive entities)
 
-inline bool isDead = false;
+inline bool isDead = false; // if (hp <= 0) isDead = true;
 inline bool isBleeding = false;
+inline bool isParanoid = false; // If paranoia is inflicted, sanity drains quicker and hallucinations are more common
+
+// Entity variables
+enum class Entities {
+	// V-2X-A
+	LURKER,		// Inflicts paranoia, leading to quicker sanity drain
+				// Counter: Face its direction
+	LEECH,		// Annoying entity that will steal random items from your inventory
+				// Counter: None, good luck lmao
+	SHINING,	// Did you really think it was only for the tutorial?
+				// Counter: As the tutorial taught you, it's better if you don't see
+	// V-2Y-A
+};
+inline Entities selEntity;
+
+inline int sDrain = 1; // If entity is visible, drains 1 sanity every 5 seconds until out of sight
+inline int sDrainP = 0; // Sanity Drain Plus, certain entities will drain more sanity in the same time period if visible
+inline int damage = 2; // Base damage that can be dealt by entities
+inline int damageP = 0; // Damage Plus, scales on Difficulty, starts at +0 (Hard) and is maxed at +3 (Brutal)
+
+inline bool isHallucination; // Begins to appear based on `hallucinations`
+
+// Chunk variables
+enum class Chunks {
+	BASIC,		// Empty chunks, just filler with a chance to spawn items
+	PIT,		// A chunk with death pit traps around
+	CAMP,		// Probably turn around, high entity spawnrates but an influx of items
+
+};
+inline Chunks genChunks = Chunks::BASIC;
+
+inline int rDist = 7; // Render distance (how many chunks are rendered from player position)
+inline float chSize = 65.f; // Chunk size (in pixels)
 
 inline sf::Font jetBrainsMono("Assets/Font/JetBrainsMono.ttf");
