@@ -79,10 +79,13 @@ inline bool isHallucination; // Begins to appear based on `hallucinations`
 
 // Chunk variables
 enum class Chunks {
+	// V-2X-A
 	BASIC,		// Empty chunks, just filler with a chance to spawn items
 	PIT,		// A chunk with death pit traps around
 	CAMP,		// Probably turn around, high entity spawnrates but an influx of items
+	FOREST,		// Higher Lurker spawnrates
 
+	// V-2Y-A
 };
 inline Chunks genChunks = Chunks::BASIC;
 
