@@ -24,7 +24,7 @@ inline void uPlayer(float dt) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) velocity.x += 1.f;
 
     float maxSpd = p.spd;
-    for (const auto& c : activeChunks) {
+    for (const auto& c : chData) {
         if (c.chPos == p.chunk && c.type == Chunks::FOREST) {
             maxSpd *= 0.6f;
             break;
@@ -37,7 +37,7 @@ inline void uPlayer(float dt) {
         p.pos += velocity * maxSpd * dt;
     }
 
-    if (p.pos.x < cBounds.minX || p.pos.x > cBounds.maxX || p.pos.y < cBounds.minY || p.pos.y > cBounds.maxY) {
+    if (p.pos.x < chBounds.minX || p.pos.x > chBounds.maxX || p.pos.y < chBounds.minY || p.pos.y > chBounds.maxY) {
         rChunks(p.chunk);
     }
 }
@@ -48,7 +48,7 @@ inline void init2X(sf::RenderWindow& window) {
     const float vRad = chSize * (rDist + 0.2f);
     const float rad = chSize * 6.f;
 
-    for (auto& c : activeChunks) {
+    for (auto& c : chData) {
         sf::Transform tx;
         tx.translate(centre);
         sf::Vector2f wPos(c.chPos.x * chSize, c.chPos.y * chSize);
@@ -68,6 +68,10 @@ inline void init2X(sf::RenderWindow& window) {
         }
 
         window.draw(c.chunk, tx);
+
+        if (!c.showEyes && c.eyes.getVertexCount() > 0) {
+            window.draw(c.eyes, tx);
+        }
     }
 
     sf::RectangleShape pDot({ 8.f, 8.f });

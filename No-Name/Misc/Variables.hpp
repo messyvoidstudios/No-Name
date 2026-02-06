@@ -84,7 +84,7 @@ enum class Chunks {
 	PIT,		// A chunk with death pit traps around
 	CAMP,		// Probably turn around, high entity spawnrates but an influx of items
 	FOREST,		// Higher Lurker spawnrates
-
+	ENTRANCE,	// Escape the surface by going deeper
 	// V-2Y-A
 };
 inline Chunks genChunks = Chunks::BASIC;
