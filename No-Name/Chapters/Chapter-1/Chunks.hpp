@@ -1,7 +1,10 @@
 #pragma once
-#include "../../../Misc/Functions.hpp"
-#include "../../../Misc/Includes.hpp"
-#include "../../../Misc/Variables.hpp"
+#include "../../Misc/Functions.hpp"
+#include "../../Misc/Includes.hpp"
+#include "../../Misc/Variables.hpp"
+
+enum class Entities;
+void sEntity(Entities type, sf::Vector2f pos, sf::Vector2i chPos);
 
 struct ChunkData {
     sf::VertexArray chunk;
@@ -13,6 +16,7 @@ struct ChunkData {
     sf::Vector2f eyePos;
 
     bool isTriggered = false;
+    bool discovered = false;
     bool showEyes = false;
 };
 
@@ -201,7 +205,7 @@ void rChunks(sf::Vector2i chPos) {
             }
 
             if (!exists) {
-                Chunks t = Chunks::BASIC;
+                Chunks t = Chunks::SURFACE;
 
                 int neighbours = 0;
                 for (const auto& existing : chData) {
@@ -214,10 +218,20 @@ void rChunks(sf::Vector2i chPos) {
 
                 float r = rand(0.f, 100.f);
                 float fChance = (neighbours > 0) ? 40.f : 97.f;
-                if (r > 99.95f) t = Chunks::ENTRANCE;
-                else if (r > 99.5f) t = Chunks::PIT;
-                else if (r > 98.5f) t = Chunks::CAMP;
-                else if (r > fChance) t = Chunks::FOREST;
+
+                bool isEntrance = false;
+                for (const auto& c : chData) if (c.type == Chunks::ENTRANCE) isEntrance = true;
+                
+                if (chWalked >= 250 && !isEntrance) {
+                    float eChance = 99.99f - (std::min((chWalked - 250) * 0.05f, 5.0f));
+                    if (r > eChance) t = Chunks::ENTRANCE;
+                }
+
+                if (t == Chunks::SURFACE) {
+                    if (r > 99.5f) t = Chunks::PIT;
+                    else if (r > 98.5f) t = Chunks::CAMP;
+                    else if (r > fChance) t = Chunks::FOREST;
+                }
 
                 ChunkData data;
                 data.type = t;
@@ -226,7 +240,19 @@ void rChunks(sf::Vector2i chPos) {
                 data.eyes.setPrimitiveType(sf::PrimitiveType::Lines);
                 data.chunk = chunk(t, chSize, sf::Color::Transparent);
 
-                if (t == Chunks::BASIC && rand(0.f, 100.f) > 85.f) {
+                float enRoll = rand(0.f, 100.f);
+                if (t == Chunks::CAMP) {
+                    for (int i = 0; i < 3; ++i)
+                        sEntity(Entities::LURKER, { x * chSize + rand(20,180), y * chSize + rand(20,180) }, { x,y });
+                }
+                else {
+                    if (enRoll > 98.f) {
+                        Entities rType = (enRoll > 99.5f) ? Entities::SHINING : Entities::LEECH;
+                        sEntity(rType, { x * chSize + 100.f, y * chSize + 100.f }, { x,y });
+                    }
+                }
+
+                if (t == Chunks::SURFACE && rand(0.f, 100.f) > 85.f) {
                     data.eyePos = { rand(20.f, chSize - 20.f), rand(20.f, chSize - 20.f) };
                     dEyes(data.eyes, data.eyePos);
                 }
@@ -261,6 +287,11 @@ inline void uChunks(sf::Vector2f playerPos) {
     sf::Vector2i curChunk(static_cast<int>(std::floor(playerPos.x / chSize)), static_cast<int>(std::floor(playerPos.y / chSize)));
 
     for (auto& c : chData) {
+        if (curChunk == c.chPos && !c.discovered) {
+            c.discovered = true;
+            chWalked++;
+        }
+
         if (c.type == Chunks::PIT && !c.isTriggered) {
             if (curChunk == c.chPos) {
                 c.isTriggered = true;
@@ -271,8 +302,9 @@ inline void uChunks(sf::Vector2f playerPos) {
         else if (c.type == Chunks::ENTRANCE && !c.isTriggered) {
             if (curChunk == c.chPos) {
                 c.isTriggered = true;
-                chData.clear();
                 playerPos = { 0, 0 };
+                chWalked = 0;
+                chData.clear();
                 currentProg = Ch1Progress::SEQUENCE2;
                 return;
             }

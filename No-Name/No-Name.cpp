@@ -1,9 +1,8 @@
-﻿#include "Misc/Audio.hpp"
+﻿#include <SFML/Main.hpp>
+#include "Misc/Audio.hpp"
 #include "Misc/Functions.hpp"
 #include "Misc/Includes.hpp"
 #include "Misc/Variables.hpp"
-
-#include "Chapters/Features/Player/Controller.hpp"
 
 #include "Chapters/Features/Blink.hpp"
 #include "Chapters/Features/Fracture.hpp"
@@ -17,8 +16,10 @@
 #include "Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
 #include "Chapters/Chapter-1/Sequence-Cave/Shining.hpp"
 
-#include "Chapters/Chapter-1/V-2X-A/Entities.hpp"
-#include "Chapters/Chapter-1/V-2X-A/V-2X-A.hpp"
+#include "Chapters/Chapter-1/Entities.hpp"
+#include "Chapters/Chapter-1/Chunks.hpp"
+
+#include "Chapters/Features/Player/Controller.hpp"
 
 #include "UI/Text.hpp"
 
@@ -87,17 +88,25 @@ int main() {
                 p.chunk = { 0, 0 };
                 rChunks(p.chunk);
 
-                initialized = true;
-            }
-
-            if (lapsed <= 2.f) {
-                blind(window);
                 lapsed += deltaTime;
+                blind(window);
+
+                if (lapsed >= 2.f) {
+                    lapsed = 0.f;
+                    initialized = true;
+                }
             }
             else {
                 uPlayer(deltaTime);
                 uChunks(p.pos);
+                uEntities(p.pos, deltaTime);
                 window.clear(sf::Color(5, 5, 10));
+
+                spawnTimer += deltaTime;
+                if (spawnTimer >= 10.f) {
+                    sEntitiesCh();
+                    spawnTimer = 0.f;
+                }
 
                 init2X(window);
 
