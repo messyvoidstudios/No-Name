@@ -68,28 +68,27 @@ enum class Entities {
 				// Counter: As the tutorial taught you, it's better if you don't see
 	// V-2Y-A
 };
-inline Entities selEntity;
 
-inline int sDrain = 1; // If entity is visible, drains 1 sanity every 5 seconds until out of sight
-inline int sDrainP = 0; // Sanity Drain Plus, certain entities will drain more sanity in the same time period if visible
-inline int damage = 2; // Base damage that can be dealt by entities
-inline int damageP = 0; // Damage Plus, scales on Difficulty, starts at +0 (Hard) and is maxed at +3 (Brutal)
-
-inline bool isHallucination; // Begins to appear based on `hallucinations`
+inline float spawnTimer = 0.f;
 
 // Chunk variables
 enum class Chunks {
 	// V-2X-A
-	BASIC,		// Empty chunks, just filler with a chance to spawn items
+	SURFACE,	// Empty chunks, just filler with a chance to spawn items
 	PIT,		// A chunk with death pit traps around
 	CAMP,		// Probably turn around, high entity spawnrates but an influx of items
 	FOREST,		// Higher Lurker spawnrates
 	ENTRANCE,	// Escape the surface by going deeper
 	// V-2Y-A
+	CORE,		// Empty chunks, just filler with a chance to spawn items
+	HOTSPOTS,	// A chunk that would damage the player if stood on
+
 };
-inline Chunks genChunks = Chunks::BASIC;
+inline Chunks genChunks = Chunks::SURFACE;
 
 inline int rDist = 7; // Render distance (how many chunks are rendered from player position)
 inline float chSize = 65.f; // Chunk size (in pixels)
+
+inline int chWalked = 0; // How many chunks the player has walked
 
 inline sf::Font jetBrainsMono("Assets/Font/JetBrainsMono.ttf");

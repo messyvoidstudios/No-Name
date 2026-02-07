@@ -6,7 +6,8 @@ include_directories("C:/SFML-3.0.0+32-Bit/include")
 
 link_directories("C:/SFML-3.0.0+32-Bit/lib")
 
-add_executable (
-	No-Name "No-Name.cpp")
+add_executable(No-Name WIN32 "No-Name.cpp")
+
+set_target_properties(No-Name PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
 
 target_link_libraries(No-Name sfml-graphics sfml-window sfml-system sfml-audio sfml-network)
