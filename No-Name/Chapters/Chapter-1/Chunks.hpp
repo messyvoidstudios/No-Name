@@ -119,13 +119,13 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
         float bRad = 55.f;
 
         for (int i = 0; i < layer; ++i) {
-            float colorFactor = 1.0f - (static_cast<float>(i) / layer);
+            float colorFactor = 1.f - (static_cast<float>(i) / layer);
             uint8_t col = static_cast<uint8_t>(30 + (225 * colorFactor));
             uint8_t a = static_cast<uint8_t>(50 + (205 * colorFactor));
 
             sf::Color layerC(col, col, col, a);
 
-            float scale = 1.0f - (i * 0.14f);
+            float scale = 1.f - (i * 0.14f);
             float rad = bRad * scale;
 
             sf::Vector2f origin;
@@ -155,7 +155,7 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
 
     if (type == Chunks::FOREST) {
         treeMax = 15;
-        treeScaleM = 1.0f;
+        treeScaleM = 1.f;
     }
 
     int trees = 2 + (std::rand() % treeMax);
@@ -223,7 +223,7 @@ void rChunks(sf::Vector2i chPos) {
                 for (const auto& c : chData) if (c.type == Chunks::ENTRANCE) isEntrance = true;
                 
                 if (chWalked >= 250 && !isEntrance) {
-                    float eChance = 99.99f - (std::min((chWalked - 250) * 0.05f, 5.0f));
+                    float eChance = 99.99f - (std::min((chWalked - 250) * 0.05f, 5.f));
                     if (r > eChance) t = Chunks::ENTRANCE;
                 }
 

@@ -48,7 +48,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
     if (!shining) return;
 
     if (lWalked >= 240) {
-        shiningDepth -= 1.0f * dt;
+        shiningDepth -= 1.f * dt;
         shiningGrace -= dt;
 
         static bool tPushed = false;
@@ -58,7 +58,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
         }
     }
 
-    if (blink.progress >= 1.0f) {
+    if (blink.progress >= 1.f) {
         shining = false;
         textQueue.push({ "It's gone... What was that...?", 3.f });
         return;
@@ -71,7 +71,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
         return;
     }
 
-    float t = std::clamp((10.f - shiningDepth) / 10.f, 0.0f, 1.0f);
+    float t = std::clamp((10.f - shiningDepth) / 10.f, 0.f, 1.f);
     uint8_t a = static_cast<uint8_t>(20.f + (t * (255.f - 20.f)));
     float pulse = std::abs(std::sin(shiningGrace * 8.f));
     uint8_t intensity = static_cast<uint8_t>(0 + (55 * pulse));
@@ -82,7 +82,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
     };
 
     float scale = std::pow(0.75f, std::max(0.1f, shiningDepth));
-    float jIntensity = (1.0f - t) * 10.f + (t * 40.f);
+    float jIntensity = (1.f - t) * 10.f + (t * 40.f);
 
     sf::Transform tx;
     tx.translate(centre + bobOffset);

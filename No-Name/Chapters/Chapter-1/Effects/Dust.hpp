@@ -21,7 +21,7 @@ inline void uDust(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) {
 
         sf::Vector2f fPos = centre + bobOffset + ((d.pos + sf::Vector2f(sinX, cosY)) * s);
 
-        float a = std::clamp(d.depth / 2.0f, 0.0f, 0.5f);
+        float a = std::clamp(d.depth / 2.f, 0.f, 0.5f);
         dustParticles.append(sf::Vertex({ fPos, sf::Color(200, 200, 200, (uint8_t)(255 * a)) }));
     }
     window.draw(dustParticles);
@@ -29,6 +29,6 @@ inline void uDust(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) {
 
 inline void initDust() {
     for (int i = 0; i < 100; ++i) {
-        dust.push_back({ {rand(-800, 800), rand(-500, 500)}, rand(0, 10), rand(1.2f, 2.0f), rand(0, 6.28f) });
+        dust.push_back({ {rand(-800, 800), rand(-500, 500)}, rand(0, 10), rand(1.2f, 2.f), rand(0, 6.28f) });
     }
 }
