@@ -70,17 +70,22 @@ void sEntity(Entities type, sf::Vector2f pos, sf::Vector2i chPos) {
 inline void uPatrol(EntityData& en, float dt) {
     float patDist = std::sqrt(std::pow(en.patPos.x - en.enPos.x, 2) + std::pow(en.patPos.y - en.enPos.y, 2));
 
-    if (patDist < 10.f || en.patPos == sf::Vector2f(0, 0)) {
-        int offX = (rand() % 3) - 1;
-        int offY = (rand() % 3) - 1;
+    if (patDist < 20.f || (en.patPos.x == 0 && en.patPos.y == 0)) {
+        int offX = (std::rand() % 3) - 1;
+        int offY = (std::rand() % 3) - 1;
 
-        sf::Vector2i targetChunk = en.enChunk + sf::Vector2i(offX, offY);
-        en.patPos = sf::Vector2f(targetChunk.x * chSize + rand(50, 150), targetChunk.y * chSize + rand(50, 150));
+        sf::Vector2i patCh = en.enChunk + sf::Vector2i(offX, offY);
+        en.patPos = sf::Vector2f(
+            patCh.x * chSize + static_cast<float>(std::rand() % (int)chSize),
+            patCh.y * chSize + static_cast<float>(std::rand() % (int)chSize)
+        );
     }
 
-    if (en.suspicion < 1.0f) {
+    if (en.suspicion < 1.f) {
         sf::Vector2f diff = en.patPos - en.enPos;
         float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-        en.enPos += (diff / dist) * 30.f * dt;
+        if (dist > 0.1f) {
+            en.enPos += (diff / dist) * 40.f * dt;
+        }
     }
 }

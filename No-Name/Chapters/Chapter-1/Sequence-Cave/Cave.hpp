@@ -54,10 +54,10 @@ inline sf::VertexArray layer(float w, float h, sf::Color c) {
             if (rand(0, 1) > 0.85f) s = -rand(h * 0.1f, h * 0.25f);
         }
         else if (angle > 1.2f * pi && angle < 1.8f * pi) {
-            if (rand(0, 1) > 0.80f) s = -rand(h * 0.15f, h * 0.4f);
+            if (rand(0, 1) > 0.8f) s = -rand(h * 0.15f, h * 0.4f);
         }
 
-        sf::Vector2f vPos(std::cos(angle) * radX * (1.0f + n), std::sin(angle) * (radY + s) * (1.0f + n));
+        sf::Vector2f vPos(std::cos(angle) * radX * (1.f + n), std::sin(angle) * (radY + s) * (1.f + n));
 
         if (i == 0) sPos = vPos;
 
@@ -74,14 +74,14 @@ inline void uCavern(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) 
 
         float scale = std::pow(0.75f, std::max(0.01f, layer.depth));
         float lFac = std::pow(0.7f, std::max(0.01f, layer.depth));
-        float pulse = (std::sin(et * 0.5f) + 1.0f) / 2.0f;
+        float pulse = (std::sin(et * 0.5f) + 1.f) / 2.f;
 
-        float aFac = 1.0f;
+        float aFac = 1.f;
         if (layer.depth < 1.5f) {
-            aFac = std::clamp((layer.depth - 0.2f) / 1.3f, 0.0f, 1.0f);
+            aFac = std::clamp((layer.depth - 0.2f) / 1.3f, 0.f, 1.f);
         }
         else if (layer.depth > (mLayers - 3)) {
-            aFac = std::clamp((mLayers - layer.depth) / 3.0f, 0.0f, 1.0f);
+            aFac = std::clamp((mLayers - layer.depth) / 3.f, 0.f, 1.f);
         }
 
         uint8_t col = static_cast<uint8_t>(255 * lFac * (0.5f + pulse * 0.5f));
@@ -119,9 +119,9 @@ inline void uCWalk(float& bobbing, sf::Vector2f& bobOffset) {
         bobOffset.x = std::cos(bobbing * 0.5f) * 12.f;
         bobOffset.y = std::sin(bobbing) * 8.f;
 
-        if (cavern.front().depth <= -1.0f) {
+        if (cavern.front().depth <= -1.f) {
             cavern.pop_front();
-            cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.0f });
+            cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), cavern.back().depth + 1.f });
             lWalked++;
         }
     }

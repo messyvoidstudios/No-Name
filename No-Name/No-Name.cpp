@@ -82,8 +82,6 @@ int main() {
             static float lapsed = 0.f;
 
             if (!initialized) {
-                textQueue.push({ "The air is cold. The walls are gone.", 3.f });
-
                 p.pos = { 0.f, 0.f };
                 p.chunk = { 0, 0 };
                 rChunks(p.chunk);
@@ -92,6 +90,7 @@ int main() {
                 blind(window);
 
                 if (lapsed >= 2.f) {
+                    textQueue.push({ "The air is cold. The walls are gone.", 3.f });
                     lapsed = 0.f;
                     initialized = true;
                 }

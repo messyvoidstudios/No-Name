@@ -39,7 +39,7 @@ inline void cracks(sf::VertexArray& crack, sf::Vector2f start, sf::Vector2f end,
 inline void uFracture(Blinking& blink, float dt, sf::RenderWindow& window) {
     sf::Vector2f centre(window.getSize().x / 2.f, window.getSize().y / 2.f);
     if (lWalked >= 260) {
-        if (blink.progress >= 1.0f && !crack.isCracking) {
+        if (blink.progress >= 1.f && !crack.isCracking) {
             crack.isCracking = true;
             crack.lines.setPrimitiveType(sf::PrimitiveType::Lines);
 

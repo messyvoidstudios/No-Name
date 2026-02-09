@@ -28,8 +28,8 @@ inline void uBlinks(Blinking& state, float dt, sf::RenderWindow& window) {
 
     if (state.closing) {
         state.progress += state.spd * dt;
-        if (state.progress >= 1.0f) {
-            state.progress = 1.0f;
+        if (state.progress >= 1.f) {
+            state.progress = 1.f;
             if (!blinked) {
                 state.closing = false;
             }
@@ -37,8 +37,8 @@ inline void uBlinks(Blinking& state, float dt, sf::RenderWindow& window) {
     }
     else {
         state.progress -= state.spd * dt;
-        if (state.progress <= 0.0f) {
-            state.progress = 0.0f;
+        if (state.progress <= 0.f) {
+            state.progress = 0.f;
             state.closing = true;
             state.active = false;
         }
