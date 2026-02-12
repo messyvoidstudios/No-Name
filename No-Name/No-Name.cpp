@@ -9,23 +9,25 @@
 #include "Chapters/Features/Inventory.hpp"
 #include "Chapters/Features/Sanity.hpp"
 
-#include "Chapters/Chapter-1/Effects/Bleed.hpp"
 #include "Chapters/Chapter-1/Effects/Dust.hpp"
 #include "Chapters/Chapter-1/Effects/Hallucinations.hpp"
 
-#include "Chapters/Chapter-1/Sequence-Cave/Cave.hpp"
-#include "Chapters/Chapter-1/Sequence-Cave/Shining.hpp"
+#include "Chapters/Chapter-1/Cave/Cave.hpp"
+#include "Chapters/Chapter-1/Cave/Shining.hpp"
 
 #include "Chapters/Chapter-1/Entities.hpp"
 #include "Chapters/Chapter-1/Chunks.hpp"
 
 #include "Chapters/Features/Player/Controller.hpp"
 
+#include "UI/Stats.hpp"
 #include "UI/Text.hpp"
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({ 1920, 1080 }), "No Name", sf::State::Fullscreen);
     window.setFramerateLimit(60);
+
+	std::srand(std::time(nullptr));
 
     initCavern();
     initDust();
@@ -47,8 +49,8 @@ int main() {
             uCavern(elapsedTime, bobOffset, window);
             uDust(elapsedTime, bobOffset, window);
 
-            uBlinks(blink, deltaTime, window);
             uShining(blink, deltaTime, window, bobOffset);
+            uBlinks(blink, deltaTime, window);
 
             checkDist();
 
@@ -97,8 +99,18 @@ int main() {
             }
             else {
                 uPlayer(deltaTime);
+                uSanity(deltaTime);
+                uHallucinations(deltaTime, p.pos);
+
                 uChunks(p.pos);
-                uEntities(p.pos, deltaTime);
+
+                uEntities(deltaTime, p.pos);
+
+                uInventory(deltaTime);
+                uPickups(p.pos);
+
+                uStats(deltaTime);
+
                 window.clear(sf::Color(5, 5, 10));
 
                 spawnTimer += deltaTime;
@@ -107,7 +119,9 @@ int main() {
                     spawnTimer = 0.f;
                 }
 
-                init2X(window);
+                dInventory(window);
+                dStats(window);
+                initPlayer(window);
 
                 uBlinks(blink, deltaTime, window);
             }
