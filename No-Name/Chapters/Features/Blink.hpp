@@ -19,7 +19,7 @@ inline void uBlinks(Blinking& state, float dt, sf::RenderWindow& window) {
         state.timer = 0.f;
     }
 
-    bool blinked = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
+    bool blinked = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B);
     if (blinked) {
         state.active = true;
     }

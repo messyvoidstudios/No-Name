@@ -10,16 +10,15 @@ struct EntityData {
     sf::Vector2f patPos;
     sf::Vector2i enChunk;
 
-	int sDrain = 1; // If entity is visible, drains 1 sanity every 5 seconds until out of sight
-	int sDrainP = 0; // Sanity Drain Plus, certain entities will drain more sanity in the same time period if visible
+	int sDrain = 1; // If entity is visible, drains 1 sanity every minute, scales with sanity
 	int damage = 2; // Base damage that can be dealt by entities
 	int damageP = 0; // Damage Plus, scales on Difficulty, starts at +0 (Hard) and is maxed at +3 (Brutal)
 
     float suspicion = 0.f;
+    float stunTimer = 0.f;
 
     bool isHallucination = false; // Begins to appear based on `hallucinations`
 	bool delEntity = false;
-
 };
 
 inline std::vector<EntityData> enData;

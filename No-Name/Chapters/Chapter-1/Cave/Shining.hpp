@@ -6,7 +6,7 @@
 
 #include "../../../UI/Text.hpp"
 
-inline sf::VertexArray smiles(float size, sf::Color color) {
+inline sf::VertexArray smiles(float size, sf::Color col) {
     sf::VertexArray smile(sf::PrimitiveType::Lines);
     int segments = 16;
     for (int i = 0; i < segments; ++i) {
@@ -16,8 +16,8 @@ inline sf::VertexArray smiles(float size, sf::Color color) {
         sf::Vector2f p1(std::cos(angle1) * size, std::sin(angle1) * (size * 0.5f));
         sf::Vector2f p2(std::cos(angle2) * size, std::sin(angle2) * (size * 0.5f));
 
-        smile.append(sf::Vertex({ p1, color }));
-        smile.append(sf::Vertex({ p2, color }));
+        smile.append(sf::Vertex({ p1, col }));
+        smile.append(sf::Vertex({ p2, col }));
     }
     return smile;
 }
@@ -75,7 +75,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
     uint8_t a = static_cast<uint8_t>(20.f + (t * (255.f - 20.f)));
     float pulse = std::abs(std::sin(shiningGrace * 8.f));
     uint8_t intensity = static_cast<uint8_t>(0 + (55 * pulse));
-    sf::Color color(255, 0, intensity, a);
+    sf::Color col(255, 0, intensity, a);
 
     std::vector<sf::Vector2f> smileOffsets = {
         {0, 0}, {-150, -100}, {180, -80}, {-120, 150}, {140, 120}
@@ -89,7 +89,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
     tx.scale({ scale, scale });
     tx.translate({ std::sin(shiningGrace * 15.f) * jIntensity, 0.f });
 
-    sf::VertexArray entity = smiles(40.f, color);
+    sf::VertexArray entity = smiles(40.f, col);
 
     for (size_t i = 0; i < smileOffsets.size(); ++i) {
         sf::Transform ltx = tx;

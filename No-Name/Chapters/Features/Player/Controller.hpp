@@ -4,6 +4,7 @@
 #include "../../../Misc/Variables.hpp"
 
 #include "../Blink.hpp"
+#include "../Inventory.hpp"
 #include "../../Chapter-1/Chunks.hpp"
 #include "../../Chapter-1/Entities.hpp"
 
@@ -33,9 +34,13 @@ inline void sEntitiesCh() {
     sEntity(t, { spawnCh.chPos.x * chSize + offsetX, spawnCh.chPos.y * chSize + offsetY }, spawnCh.chPos);
 }
 
-inline void uEntities(sf::Vector2f playerPos, float dt) {
+inline void uEntities(float dt, sf::Vector2f playerPos) {
+    isParanoid = false;
+
     auto it = enData.begin();
     while (it != enData.end()) {
+        if (it->type == Entities::LURKER) isParanoid = true;
+
         it->enChunk = sf::Vector2i(
             static_cast<int>(std::floor(it->enPos.x / chSize)),
             static_cast<int>(std::floor(it->enPos.y / chSize))
@@ -43,18 +48,47 @@ inline void uEntities(sf::Vector2f playerPos, float dt) {
 
         sf::Vector2f diff = it->enPos - playerPos;
         float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-
         sf::Vector2f dir = (dist > 0.1f) ? diff / dist : sf::Vector2f(0.f, -1.f);
 
         float lookFac = (p.facing.x * dir.x) + (p.facing.y * dir.y);
 
         if (it->type == Entities::SHINING && blink.progress >= 1.f) it->delEntity = true;
+
         if (it->type == Entities::LURKER && lookFac > 0.7f && dist < chSize * 3.f) it->delEntity = true;
-        if (it->type == Entities::LEECH && dist < 20.f) it->delEntity = true;
+
+        if (it->isHallucination && dist < 25.f) it->delEntity = true;
 
         if (dist > chSize * (rDist + 1.5f)) it->delEntity = true;
-        if (dist < 15.f) {
+
+        if (dist < 15.f && !it->isHallucination) {
+            if (it->type == Entities::LEECH) {
+                stealItem();
+            }
+            else {
+                if (shield > 0) consumeShield();
+                else hp -= (it->damage + it->damageP);
+                sanity -= (it->sDrain);
+            }
             it->delEntity = true;
+        }
+
+        if (it->stunTimer > 0.f) {
+            it->stunTimer -= dt;
+            it->entity[0].color = sf::Color::Yellow;
+            ++it;
+            continue;
+        }
+
+        for (auto& trap : activeTraps) {
+            if (!trap.sprung) {
+                sf::Vector2f tDiff = it->enPos - trap.pos;
+                float tDist = std::sqrt(tDiff.x * tDiff.x + tDiff.y * tDiff.y);
+
+                if (tDist < 25.f) {
+                    trap.sprung = true;
+                    it->stunTimer = 6.f;
+                }
+            }
         }
 
         if (it->delEntity) {
@@ -84,14 +118,43 @@ inline void uEntities(sf::Vector2f playerPos, float dt) {
     }
 }
 
+inline void useItem() {
+    if (activeSlot >= inventory.size()) return;
+    auto& item = inventory[activeSlot];
+
+    bool consumed = false;
+    if (item.type == ItemType::BATTERY) {
+        battery = 100.f;
+        consumed = true;
+    }
+    else if (item.type == ItemType::PILLS) {
+        sanity = std::min(10, sanity + 3);
+        consumed = true;
+    }
+    else if (item.type == ItemType::TRAP) {
+        activeTraps.push_back({ p.pos, false, 60.f });
+        consumed = true;
+    }
+
+    if (consumed) {
+        item.count--;
+        if (item.count <= 0) inventory.erase(inventory.begin() + activeSlot);
+    }
+}
+
 inline void uPlayer(float dt) {
     sf::Vector2f velocity(0.f, 0.f);
     p.chunk = sf::Vector2i(static_cast<int>(std::floor(p.pos.x / chSize)), static_cast<int>(std::floor(p.pos.y / chSize)));
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) velocity.y -= 1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) velocity.y += 1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) velocity.x -= 1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) velocity.x += 1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) velocity.y -= 1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) velocity.y += 1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) velocity.x -= 1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) velocity.x += 1.f;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) activeSlot = 0;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2)) activeSlot = 1;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3)) activeSlot = 2;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4)) activeSlot = 3;
 
     float maxSpd = p.spd;
     for (const auto& c : chData) {
@@ -111,9 +174,37 @@ inline void uPlayer(float dt) {
     if (p.pos.x < chBounds.minX || p.pos.x > chBounds.maxX || p.pos.y < chBounds.minY || p.pos.y > chBounds.maxY) {
         rChunks(p.chunk);
     }
+
+    static bool lClick = false;
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+        if (!lClick) {
+            useItem();
+            lClick = true;
+        }
+    }
+    else lClick = false;
+
+    static bool fPressed = false;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPressed) {
+            torchOn = !torchOn;
+            fPressed = true;
+        }
+    }
+    else fPressed = false;
+
+    if (torchOn) {
+        battery -= 2.0f * dt;
+        if (battery <= 0) { battery = 0; torchOn = false; }
+    }
+
+    shield = 0;
+    if (!isBrutal) {
+        for (auto& item : inventory) if (item.type == ItemType::SHIELD) { shield = 1; break; }
+    }
 }
 
-inline void init2X(sf::RenderWindow& window) {
+inline void initPlayer(sf::RenderWindow& window) {
     sf::Vector2f centre(window.getSize().x / 2.f, window.getSize().y / 2.f);
 
     const float vRad = chSize * (rDist + 0.5f);
@@ -124,29 +215,21 @@ inline void init2X(sf::RenderWindow& window) {
     auto alpha = [&](sf::Vector2f wPos) {
         sf::Vector2f diff = wPos - p.pos;
         float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-
         if (dist < 5.f) return (uint8_t)255;
 
         float ambGlow = 1.f - std::clamp((dist - glowRad) / (vRad - glowRad), 0.f, 1.f);
         ambGlow = std::pow(ambGlow, 3.f);
 
         float torch = 0.f;
-        if (dist < torchL) {
+        if (torchOn && dist < torchL) {
             sf::Vector2f vDir = diff / dist;
             float dot = (p.facing.x * vDir.x) + (p.facing.y * vDir.y);
-
             if (dot > torchW) {
-                float coneFall = (dot - torchW) / (1.f - torchW);
-                float distFall = 1.f - (dist / torchL);
-
-                torch = coneFall * distFall;
+                torch = ((dot - torchW) / (1.f - torchW)) * (1.f - (dist / torchL));
             }
         }
-
-        float a = std::clamp(ambGlow + torch, 0.f, 1.f);
-
-        return static_cast<uint8_t>(255 * a);
-        };
+        return static_cast<uint8_t>(255 * std::clamp(ambGlow + torch, 0.f, 1.f));
+    };
 
     for (auto& c : chData) {
         sf::Transform tx;
@@ -181,11 +264,52 @@ inline void init2X(sf::RenderWindow& window) {
         }
 
         if (en.type == Entities::SHINING) {
-            float angle = std::sin(chWalked * 0.1f) * 15.f;
+            float angle = std::sin(lWalked * 0.1f) * 15.f;
             tx.rotate(sf::degrees(angle));
         }
 
         if (aVal > 2) window.draw(en.entity, tx);
+    }
+
+    for (auto& wi : worldItems) {
+        uint8_t aVal = alpha(wi.pos);
+        if (aVal > 10) {
+            sf::Transform tx;
+            tx.translate(centre);
+            tx.translate(wi.pos - p.pos);
+
+            sf::Color itemCol = (wi.type == ItemType::BATTERY) ? sf::Color(60, 60, 60) :
+                (wi.type == ItemType::SHIELD) ? sf::Color(40, 40, 40) :
+                (wi.type == ItemType::PILLS) ? sf::Color(60, 60, 60) : sf::Color(40, 40, 40);
+            itemCol.a = aVal;
+
+            sf::VertexArray shape = getItemShape(wi.type, { 0, 0 }, itemCol, 1.0f);
+            window.draw(shape, tx);
+        }
+    }
+
+    for (auto& trap : activeTraps) {
+        uint8_t aVal = alpha(trap.pos);
+        if (aVal > 10) {
+            sf::Transform tx;
+            tx.translate(centre + (trap.pos - p.pos));
+
+            sf::Color trapCol = trap.sprung ? sf::Color(100, 100, 100, aVal) : sf::Color(200, 200, 200, aVal);
+
+            sf::VertexArray va(sf::PrimitiveType::Lines);
+            if (!trap.sprung) {
+                for (int i = 0; i < 6; ++i) {
+                    float a = (i / 6.f) * 6.28f;
+                    va.append({ {cos(a) * 10, sin(a) * 10}, trapCol });
+                    va.append({ {cos(a) * 15, sin(a) * 15}, trapCol });
+                }
+            }
+            else {
+                va.append({ {-10, -10}, trapCol }); va.append({ {10, 10}, trapCol });
+                va.append({ {10, -10}, trapCol }); va.append({ {-10, 10}, trapCol });
+            }
+            window.draw(va, tx);
+        }
     }
 
     sf::RectangleShape pDot({ 8.f, 8.f });

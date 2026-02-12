@@ -24,9 +24,9 @@ struct ChunkBounds {
     float minX, minY, maxX, maxY;
 };
 
-inline ChunkBounds chBounds;
-
 inline std::vector<ChunkData> chData;
+
+inline ChunkBounds chBounds;
 
 inline void dTree(sf::VertexArray& tree, sf::Vector2f pos, float scale) {
     sf::Color c = sf::Color(40, 40, 40);
@@ -119,9 +119,9 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
         float bRad = 55.f;
 
         for (int i = 0; i < layer; ++i) {
-            float colorFactor = 1.f - (static_cast<float>(i) / layer);
-            uint8_t col = static_cast<uint8_t>(30 + (225 * colorFactor));
-            uint8_t a = static_cast<uint8_t>(50 + (205 * colorFactor));
+            float colFac = 1.f - (static_cast<float>(i) / layer);
+            uint8_t col = static_cast<uint8_t>(30 + (225 * colFac));
+            uint8_t a = static_cast<uint8_t>(50 + (205 * colFac));
 
             sf::Color layerC(col, col, col, a);
 
@@ -151,7 +151,6 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
 
     int treeMax = 3;
     float treeScaleM = 0.7f;
-    sf::Color forestColor = sf::Color(40, 40, 40);
 
     if (type == Chunks::FOREST) {
         treeMax = 15;
@@ -222,8 +221,8 @@ void rChunks(sf::Vector2i chPos) {
                 bool isEntrance = false;
                 for (const auto& c : chData) if (c.type == Chunks::ENTRANCE) isEntrance = true;
                 
-                if (chWalked >= 250 && !isEntrance) {
-                    float eChance = 99.99f - (std::min((chWalked - 250) * 0.05f, 5.f));
+                if (lWalked >= 250 && !isEntrance) {
+                    float eChance = 99.99f - (std::min((lWalked - 250) * 0.05f, 5.f));
                     if (r > eChance) t = Chunks::ENTRANCE;
                 }
 
@@ -252,9 +251,16 @@ void rChunks(sf::Vector2i chPos) {
                     }
                 }
 
-                if (t == Chunks::SURFACE && rand(0.f, 100.f) > 85.f) {
+                if (t == Chunks::SURFACE && enRoll > 85.f) {
                     data.eyePos = { rand(20.f, chSize - 20.f), rand(20.f, chSize - 20.f) };
                     dEyes(data.eyes, data.eyePos);
+                }
+
+                if (r > 98.f) {
+                    ItemWorld newItem;
+                    newItem.type = static_cast<ItemType>(std::rand() % 4);
+                    newItem.pos = { x * chSize + rand(50.f, 150.f), y * chSize + rand(50.f, 150.f) };
+                    worldItems.push_back(newItem);
                 }
 
                 chData.push_back(data);
@@ -289,7 +295,7 @@ inline void uChunks(sf::Vector2f playerPos) {
     for (auto& c : chData) {
         if (curChunk == c.chPos && !c.discovered) {
             c.discovered = true;
-            chWalked++;
+            lWalked++;
         }
 
         if (c.type == Chunks::PIT && !c.isTriggered) {
@@ -303,7 +309,7 @@ inline void uChunks(sf::Vector2f playerPos) {
             if (curChunk == c.chPos) {
                 c.isTriggered = true;
                 playerPos = { 0, 0 };
-                chWalked = 0;
+                lWalked = 0;
                 chData.clear();
                 currentProg = Ch1Progress::SEQUENCE2;
                 return;
