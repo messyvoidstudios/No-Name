@@ -69,7 +69,7 @@ inline sf::VertexArray layer(float w, float h, sf::Color c) {
 
 inline void uCavern(float et, sf::Vector2f bobOffset, sf::RenderWindow& window) {
     sf::Vector2f centre(window.getSize().x / 2.f, window.getSize().y / 2.f);
-    for (int i = (int)cavern.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(cavern.size()) - 1; i >= 0; --i) {
         auto& layer = cavern[i];
 
         float scale = std::pow(0.75f, std::max(0.01f, layer.depth));
@@ -139,6 +139,6 @@ inline void uCWalk(float& bobbing, sf::Vector2f& bobOffset) {
 
 inline void initCavern() {
     for (int i = 0; i < mLayers; ++i) {
-        cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), (float)i });
+        cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), static_cast<float>(i) });
     }
 }

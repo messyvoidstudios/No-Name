@@ -1,5 +1,4 @@
-﻿#include <SFML/Main.hpp>
-#include "Misc/Audio.hpp"
+﻿#include "Misc/Audio.hpp"
 #include "Misc/Functions.hpp"
 #include "Misc/Includes.hpp"
 #include "Misc/Variables.hpp"
@@ -102,7 +101,7 @@ int main() {
                 uSanity(deltaTime);
                 uHallucinations(deltaTime, p.pos);
 
-                uChunks(p.pos);
+                uChunks(p.pos, deltaTime);
 
                 uEntities(deltaTime, p.pos);
 
