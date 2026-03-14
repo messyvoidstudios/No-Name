@@ -8,7 +8,7 @@ inline float rand(float min, float max) {
 }
 
 inline void blind(sf::RenderWindow& window) {
-    sf::RectangleShape black({ (float)window.getSize().x, (float)window.getSize().y });
+    sf::RectangleShape black({ static_cast<float>(window.getSize().x), static_cast<float>(window.getSize().y) });
     black.setFillColor(sf::Color::Black);
     black.setOrigin({ black.getLocalBounds().size.x / 2.f, black.getLocalBounds().size.y / 2.f });
     black.setPosition({ window.getSize().x / 2.f, window.getSize().y / 2.f });

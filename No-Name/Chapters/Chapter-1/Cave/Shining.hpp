@@ -38,7 +38,7 @@ inline void uShining(Blinking& blink, float dt, sf::RenderWindow& window, sf::Ve
             l_detail = 240;
             cavern.clear();
             for (int i = 0; i < mLayers; ++i) {
-                cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), (float)i });
+                cavern.push_back({ layer(1600.f, 900.f, sf::Color::White), static_cast<float>(i) });
             }
             caveRegenerated = true;
             caveDistort = true;

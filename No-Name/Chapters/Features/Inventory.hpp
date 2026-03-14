@@ -35,11 +35,25 @@ float invY = 0.f;
 inline sf::VertexArray getItemShape(ItemType type, sf::Vector2f pos, sf::Color col, float scale = 1.0f) {
     sf::VertexArray va(sf::PrimitiveType::Lines);
     if (type == ItemType::BATTERY) {
-        float w = 10.f * scale, h = 15.f * scale;
+        float w = 9.f * scale, h = 14.f * scale;
+        float tipW = 4.f * scale, tipH = 3.f * scale;
+
         va.append({ {pos.x - w, pos.y - h}, col }); va.append({ {pos.x + w, pos.y - h}, col });
         va.append({ {pos.x + w, pos.y - h}, col }); va.append({ {pos.x + w, pos.y + h}, col });
         va.append({ {pos.x + w, pos.y + h}, col }); va.append({ {pos.x - w, pos.y + h}, col });
         va.append({ {pos.x - w, pos.y + h}, col }); va.append({ {pos.x - w, pos.y - h}, col });
+
+        va.append({ {pos.x - tipW, pos.y - h},        col }); va.append({ {pos.x - tipW, pos.y - h - tipH}, col });
+        va.append({ {pos.x - tipW, pos.y - h - tipH}, col }); va.append({ {pos.x + tipW, pos.y - h - tipH}, col });
+        va.append({ {pos.x + tipW, pos.y - h - tipH}, col }); va.append({ {pos.x + tipW, pos.y - h},        col });
+
+        float barY1 = pos.y + h * 0.2f;
+        float barY2 = pos.y + h * 0.6f;
+        float barInset = w * 0.35f;
+        va.append({ {pos.x - w + barInset, barY1}, col }); va.append({ {pos.x + w - barInset, barY1}, col });
+        va.append({ {pos.x - w + barInset, barY2}, col }); va.append({ {pos.x + w - barInset, barY2}, col });
+
+        va.append({ {pos.x - w, pos.y}, col }); va.append({ {pos.x + w, pos.y}, col });
     }
     else if (type == ItemType::SHIELD) {
         for (int i = 0; i < 8; ++i) {
@@ -50,9 +64,30 @@ inline sf::VertexArray getItemShape(ItemType type, sf::Vector2f pos, sf::Color c
         va.append({ {pos.x - 2, pos.y}, col }); va.append({ {pos.x + 2, pos.y}, col });
     }
     else if (type == ItemType::PILLS) {
-        float r = 8.f * scale;
-        va.append({ {pos.x - r, pos.y - r}, col }); va.append({ {pos.x + r, pos.y - r}, col });
-        va.append({ {pos.x + r, pos.y + r}, col }); va.append({ {pos.x - r, pos.y + r}, col });
+        float r = 6.f * scale;
+        float bodyH = 8.f * scale;
+        int segments = 8;
+
+        for (int i = 0; i < segments; ++i) {
+            float a1 = pi + (i / static_cast<float>(segments)) * pi;
+            float a2 = pi + ((i + 1) / static_cast<float>(segments)) * pi;
+
+            va.append({ {pos.x + std::cosf(a1) * r, pos.y - bodyH + std::sinf(a1) * r}, col });
+            va.append({ {pos.x + std::cosf(a2) * r, pos.y - bodyH + std::sinf(a2) * r}, col });
+        }
+
+        for (int i = 0; i < segments; ++i) {
+            float a1 = (i / static_cast<float>(segments)) * pi;
+            float a2 = ((i + 1) / static_cast<float>(segments)) * pi;
+
+            va.append({ {pos.x + std:: cosf(a1) * r, pos.y + bodyH + std::sinf(a1) * r}, col });
+            va.append({ {pos.x + std::cosf(a2) * r, pos.y + bodyH + std::sinf(a2) * r}, col });
+        }
+
+        va.append({ {pos.x - r, pos.y - bodyH}, col }); va.append({ {pos.x - r, pos.y + bodyH}, col });
+        va.append({ {pos.x + r, pos.y - bodyH}, col }); va.append({ {pos.x + r, pos.y + bodyH}, col });
+
+        va.append({ {pos.x - r, pos.y}, col }); va.append({ {pos.x + r, pos.y}, col });
     }
     else if (type == ItemType::TRAP) {
         va.append({ {pos.x - 10, pos.y - 10}, col }); va.append({ {pos.x + 10, pos.y + 10}, col });
