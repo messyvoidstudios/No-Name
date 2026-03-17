@@ -189,9 +189,26 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
     else if (type == Chunks::MARSH) {
         sf::Color reedC(25, 30, 25);
         sf::Color waterC(15, 20, 25);
+
+        int poolSeg = 10;
+        float prx = size * 0.22f, pry = size * 0.15f;
+        float px = rand(size * 0.35f, size * 0.65f), py = rand(size * 0.35f, size * 0.65f);
+        sf::Vector2f poolOrigin;
+        for (int j = 0; j <= poolSeg; ++j) {
+            float angle = (j / static_cast<float>(poolSeg)) * 2.f * pi;
+            sf::Vector2f pt(px + std::cos(angle) * prx + rand(-3.f, 3.f),
+                            py + std::sin(angle) * pry + rand(-2.f, 2.f));
+            if (j > 0) {
+                ch.append(sf::Vertex({ poolOrigin, waterC }));
+                ch.append(sf::Vertex({ pt,         waterC }));
+            }
+            poolOrigin = pt;
+        }
+
         int clusters = 6 + (std::rand() % 6);
         for (int i = 0; i < clusters; ++i)
             dReedCluster(ch, { rand(8.f, size - 8.f), rand(8.f, size - 8.f) }, reedC);
+
         for (int i = 0; i < 5; ++i) {
             float wy = rand(5.f, size - 5.f);
             float wx = rand(5.f, size * 0.4f);
@@ -215,20 +232,34 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
             ch.append(sf::Vertex({ { rx, ry }, stoneC }));
             ch.append(sf::Vertex({ { rx + std::cos(ra) * rl, ry + std::sin(ra) * rl }, stoneC }));
         }
+        int ruinGrass = 8 + (std::rand() % 6);
+        for (int i = 0; i < ruinGrass; ++i)
+            dGrass(ch, { rand(5.f, size - 5.f), rand(5.f, size - 5.f) }, rand(4.f, 9.f));
     }
 
     else if (type == Chunks::CACHE) {
         sf::Color cairnC(50, 48, 44);
+        sf::Color ringC(38, 36, 32);
+
+        int seg = 10;
+        float rad = 14.f;
+        for (int i = 0; i < seg; ++i) {
+            float a1 = (i / static_cast<float>(seg)) * 2.f * pi;
+            float a2 = ((i + 1) / static_cast<float>(seg)) * 2.f * pi;
+            ch.append(sf::Vertex({ { mid + std::cos(a1) * rad, mid + std::sin(a1) * rad }, ringC }));
+            ch.append(sf::Vertex({ { mid + std::cos(a2) * rad, mid + std::sin(a2) * rad }, ringC }));
+        }
+
         float blockW[] = { 16.f, 12.f, 8.f };
         float blockH[] = {  6.f,  5.f, 4.f };
         float curY = mid + 7.f;
         for (int i = 0; i < 3; ++i) {
             float bx = mid - blockW[i] / 2.f + rand(-2.f, 2.f);
-            ch.append(sf::Vertex({ { bx,             curY           }, cairnC }));
-            ch.append(sf::Vertex({ { bx + blockW[i], curY           }, cairnC }));
-            ch.append(sf::Vertex({ { bx,             curY           }, cairnC }));
+            ch.append(sf::Vertex({ { bx,             curY             }, cairnC }));
+            ch.append(sf::Vertex({ { bx + blockW[i], curY             }, cairnC }));
+            ch.append(sf::Vertex({ { bx,             curY             }, cairnC }));
             ch.append(sf::Vertex({ { bx,             curY - blockH[i] }, cairnC }));
-            ch.append(sf::Vertex({ { bx + blockW[i], curY           }, cairnC }));
+            ch.append(sf::Vertex({ { bx + blockW[i], curY             }, cairnC }));
             ch.append(sf::Vertex({ { bx + blockW[i], curY - blockH[i] }, cairnC }));
             ch.append(sf::Vertex({ { bx,             curY - blockH[i] }, cairnC }));
             ch.append(sf::Vertex({ { bx + blockW[i], curY - blockH[i] }, cairnC }));
@@ -242,7 +273,7 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
         for (int i = 0; i < glyphs; ++i)
             dMiasmaGlyph(ch, { rand(12.f, size - 12.f), rand(12.f, size - 12.f) }, glyphC);
         for (int ring = 1; ring <= 3; ++ring) {
-            float rad = ring * 10.f;
+            float rad = ring * 13.f;
             int seg = 12;
             for (int j = 0; j < seg; ++j) {
                 if (j % 3 == 0) continue;
@@ -259,6 +290,9 @@ inline sf::VertexArray chunk(Chunks type, float size, sf::Color c) {
         int patches = 8 + (std::rand() % 6);
         for (int i = 0; i < patches; ++i)
             dBramblePatch(ch, { rand(8.f, size - 8.f), rand(8.f, size - 8.f) }, thornC);
+        int brambleGrass = 10 + (std::rand() % 8);
+        for (int i = 0; i < brambleGrass; ++i)
+            dGrass(ch, { rand(5.f, size - 5.f), rand(5.f, size - 5.f) }, rand(4.f, 10.f));
     }
 
     bool skipFill = (type == Chunks::MARSH  || type == Chunks::RUIN   ||
@@ -335,8 +369,7 @@ void rChunks(sf::Vector2i chPos) {
                         }
                     }
                 }
-                float campSpawnBoost = campNeighbours * 0.4f; // Each adjacent camp lowers the threshold by 0.4 (≈20% more spawns)
-
+                float campSpawnBoost = campNeighbours * 0.4f;
                 float r = rand(0.f, 100.f);
                 float fChance = (neighbours > 0) ? 40.f : 97.f;
 
@@ -348,15 +381,30 @@ void rChunks(sf::Vector2i chPos) {
                     if (r > eChance) t = Chunks::ENTRANCE;
                 }
 
+                bool campNearby = false;
+                for (const auto& existing : chData) {
+                    if (existing.type == Chunks::CAMP &&
+                        std::abs(existing.chPos.x - x) <= rDist &&
+                        std::abs(existing.chPos.y - y) <= rDist) {
+                        campNearby = true;
+                        break;
+                    }
+                }
+                float campThreshold = campNearby ? 99.5f : 98.5f;
+
                 if (t == Chunks::SURFACE) {
-                    if      (r > 99.5f) t = Chunks::PIT;
-                    else if (!isInitialising && r > 98.5f) t = Chunks::CAMP;
-                    else if (r > 98.0f) t = Chunks::CACHE;
-                    else if (r > 97.2f) t = Chunks::RUIN;
-                    else if (r > 96.0f) t = Chunks::MIASMA;
-                    else if (r > 94.5f) t = Chunks::MARSH;
-                    else if (r > 93.0f) t = Chunks::BRAMBLE;
-                    else if (r > fChance) t = Chunks::FOREST;
+                    if (neighbours > 0 && r > 40.f) {
+                        t = Chunks::FOREST;
+                    } else {
+                        if      (r > 99.5f) t = Chunks::PIT;
+                        else if (!isInitialising && r > campThreshold) t = Chunks::CAMP;
+                        else if (r > 98.0f) t = Chunks::CACHE;
+                        else if (r > 97.2f) t = Chunks::RUIN;
+                        else if (r > 96.0f) t = Chunks::MIASMA;
+                        else if (r > 94.5f) t = Chunks::MARSH;
+                        else if (r > 93.0f) t = Chunks::BRAMBLE;
+                        else if (r > 91.5f) t = Chunks::FOREST;
+                    }
                 }
 
                 ChunkData data;
@@ -383,7 +431,6 @@ void rChunks(sf::Vector2i chPos) {
 
                         sEntity(rType, { x * chSize + 100.f, y * chSize + 100.f }, { x,y });
 
-                        // Husk group: spawn 1-2 extras nearby
                         if (rType == Entities::HUSK) {
                             int extras = 1 + (std::rand() % 2);
                             for (int i = 0; i < extras; ++i) {
