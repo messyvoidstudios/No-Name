@@ -126,6 +126,24 @@ inline void consumeShield() {
     }
 }
 
+inline void dropActiveItem(sf::Vector2f playerPos) {
+    if (inventory.empty() || activeSlot >= static_cast<int>(inventory.size())) return;
+
+    auto& slot = inventory[activeSlot];
+
+    ItemWorld dropped;
+    dropped.type = slot.type;
+    dropped.pos  = playerPos + sf::Vector2f(rand(-28.f, 28.f), rand(-28.f, 28.f));
+    worldItems.push_back(dropped);
+
+    slot.count--;
+    if (slot.count <= 0)
+        inventory.erase(inventory.begin() + activeSlot);
+
+    if (activeSlot >= static_cast<int>(inventory.size()) && activeSlot > 0)
+        activeSlot--;
+}
+
 inline void uPickups(sf::Vector2f playerPos) {
     auto it = worldItems.begin();
     while (it != worldItems.end()) {
@@ -180,11 +198,25 @@ inline void dInventory(sf::RenderWindow& window) {
     float totalW = (slotSize * 4) + (padding * 3);
     sf::Vector2f startPos(window.getSize().x / 2.f - totalW / 2.f, (window.getSize().y - 100.f) + invOffset);
 
+    float alpha = std::clamp(255.f * (1.0f - (invOffset / 150.f)), 0.f, 255.f);
+
+    {
+        std::string countStr = std::to_string(inventory.size()) + " / 4";
+        sf::Text countLabel(jetBrainsMono, countStr, 12);
+        countLabel.setFillColor(sf::Color(243, 238, 225, static_cast<uint8_t>(alpha * 0.7f)));
+        countLabel.setPosition({ startPos.x, startPos.y - 20.f });
+        window.draw(countLabel);
+
+        sf::Text dropHint(jetBrainsMono, "Q: drop", 12);
+        dropHint.setFillColor(sf::Color(120, 120, 120, static_cast<uint8_t>(alpha * 0.7f)));
+        float hintX = startPos.x + totalW - dropHint.getLocalBounds().size.x;
+        dropHint.setPosition({ hintX, startPos.y - 20.f });
+        window.draw(dropHint);
+    }
+
     for (int i = 0; i < 4; ++i) {
         sf::RectangleShape slot({ slotSize, slotSize });
         slot.setPosition({ startPos.x + (i * (slotSize + padding)), startPos.y });
-
-        float alpha = std::clamp(255.f * (1.0f - (invOffset / 150.f)), 0.f, 255.f);
 
         slot.setFillColor(sf::Color(5, 5, 5, static_cast<uint8_t>(alpha)));
 
@@ -199,7 +231,7 @@ inline void dInventory(sf::RenderWindow& window) {
 
         window.draw(slot);
 
-        if (i < inventory.size()) {
+        if (i < static_cast<int>(inventory.size())) {
             sf::Color itemCol = inventory[i].col;
             itemCol.a = static_cast<uint8_t>(alpha);
 
@@ -207,6 +239,17 @@ inline void dInventory(sf::RenderWindow& window) {
                 { slot.getPosition().x + 30.f, slot.getPosition().y + 30.f },
                 itemCol, 1.5f);
             window.draw(va);
+
+            if (inventory[i].canStack && inventory[i].count > 1) {
+                std::string stackStr = "x" + std::to_string(inventory[i].count);
+                sf::Text stackLabel(jetBrainsMono, stackStr, 10);
+                stackLabel.setFillColor(sf::Color(180, 180, 180, static_cast<uint8_t>(alpha)));
+                stackLabel.setPosition({
+                    slot.getPosition().x + slotSize - stackLabel.getLocalBounds().size.x - 4.f,
+                    slot.getPosition().y + slotSize - 16.f
+                });
+                window.draw(stackLabel);
+            }
         }
     }
 }

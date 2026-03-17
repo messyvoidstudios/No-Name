@@ -16,9 +16,10 @@ struct Player {
 };
 
 inline Player p;
+inline bool torchFlashed = false;
 
 inline void sEntitiesCh() {
-    if (chData.empty() || enData.size() > 12) return;
+    if (chData.empty() || enData.size() > 10) return;
 
     int index = std::rand() % chData.size();
     auto& spawnCh = chData[index];
@@ -53,11 +54,14 @@ inline void sEntitiesCh() {
 
 inline void uEntities(float dt, sf::Vector2f playerPos) {
     isParanoid = false;
+    maxEntitySuspicion = 0.f;
 
     auto it = enData.begin();
     while (it != enData.end()) {
         if (it->type == Entities::LURKER) isParanoid = true;
         if (it->type == Entities::STALKER) isParanoid = true;
+
+        sf::Vector2f prevPos = it->enPos;
 
         it->enChunk = sf::Vector2i(
             static_cast<int>(std::floor(it->enPos.x / chSize)),
@@ -102,6 +106,11 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
             it->delEntity = true;
         }
 
+        if (it->delEntity) {
+            it = enData.erase(it);
+            continue;
+        }
+
         if (it->stunTimer > 0.f) {
             it->stunTimer -= dt;
             it->entity[0].color = sf::Color::Yellow;
@@ -131,11 +140,6 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
             }
         }
 
-        if (it->delEntity) {
-            it = enData.erase(it);
-            continue;
-        }
-
         float rad = chSize * 5.f;
         if (dist < rad) {
             it->suspicion += (rad - dist) / 100.f * dt;
@@ -144,6 +148,10 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
             it->suspicion -= 0.5f * dt;
         }
         it->suspicion = std::clamp(it->suspicion, 0.f, 5.f);
+        maxEntitySuspicion = std::max(maxEntitySuspicion, it->suspicion);
+
+        if (it->type == Entities::SHINING)
+            it->orbitAngle += 0.45f * dt;
 
         if (it->type == Entities::WRAITH) {
             if (it->orbitRadius == 0.f) it->orbitRadius = chSize * 3.f;
@@ -160,17 +168,28 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
             float wDist = std::sqrt(wDiff.x * wDiff.x + wDiff.y * wDiff.y);
             if (wDist > 0.1f) it->enPos += (wDiff / wDist) * 120.f * dt;
 
-            if (torchOn && dist < chSize * 4.f) {
+            if (dist < chSize * 4.f) {
                 sf::Vector2f vDir = (dist > 0.1f) ? diff / dist : sf::Vector2f(0.f, 1.f);
                 float dot = (p.facing.x * (-vDir.x)) + (p.facing.y * (-vDir.y));
-                if (dot > 0.6f) {
+
+                if (torchOn && dot > 0.6f) {
                     it->orbitRadius += 200.f * dt;
                     it->stunTimer = 1.5f;
+                }
+
+                if (torchFlashed && dist < chSize * 1.5f && dot > 0.6f) {
+                    it->delEntity = true;
                 }
             }
 
             if (dist < 80.f) {
-                sanity -= 0.5f * dt;
+                it->sanityDrainTimer += dt;
+                if (it->sanityDrainTimer >= 5.f) {
+                    sanity -= 1;
+                    it->sanityDrainTimer = 0.f;
+                }
+            } else {
+                it->sanityDrainTimer = 0.f;
             }
         }
         else if (it->type == Entities::HOLLOW) {
@@ -221,7 +240,11 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
                 it->entity[vi].color.a = a;
             }
 
-            sanity -= 0.02f * dt;
+            it->sanityDrainTimer += dt;
+            if (it->sanityDrainTimer >= 20.f) {
+                sanity -= 1;
+                it->sanityDrainTimer = 0.f;
+            }
         }
         else if (it->type == Entities::HUSK) {
             float hSpeed = 110.f;
@@ -246,6 +269,20 @@ inline void uEntities(float dt, sf::Vector2f playerPos) {
             it->enPos += (-dir) * speed * dt;
         }
 
+        if (it->type != Entities::STALKER &&
+            it->type != Entities::WRAITH  &&
+            it->type != Entities::SHINING) {
+            sf::Vector2f moved = it->enPos - prevPos;
+            if (std::abs(moved.x) > 0.5f * dt)
+                it->facingRight = (moved.x > 0.f);
+            float moveDist = std::sqrt(moved.x * moved.x + moved.y * moved.y);
+            it->animTimer += moveDist * 0.05f;
+            if (it->animTimer >= 1.f) {
+                it->animTimer -= 1.f;
+                it->animStep ^= 1;
+            }
+        }
+
         ++it;
     }
 }
@@ -260,7 +297,7 @@ inline void useItem() {
         consumed = true;
     }
     else if (item.type == ItemType::PILLS) {
-        sanity = std::min(10, sanity + 3);
+        sanity = std::min(10.f, sanity + 3);
         consumed = true;
     }
     else if (item.type == ItemType::TRAP) {
@@ -333,10 +370,22 @@ inline void uPlayer(float dt) {
     }
     else lClick = false;
 
+    static bool qPressed = false;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
+        if (!qPressed) {
+            dropActiveItem(p.pos);
+            qPressed = true;
+        }
+    }
+    else qPressed = false;
+
     static bool fPressed = false;
+    torchFlashed = false;
+
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
         if (!fPressed) {
             torchOn = !torchOn;
+            if (torchOn) torchFlashed = true;
             fPressed = true;
         }
     }
@@ -357,8 +406,12 @@ inline void uPlayer(float dt) {
 inline void initPlayer(sf::RenderWindow& window) {
     sf::Vector2f centre(window.getSize().x / 2.f, window.getSize().y / 2.f);
 
-    const float vRad = chSize * (rDist + 0.5f);
-    const float glowRad = chSize * 1.2f;
+    const float vRadBase   = chSize * (rDist + 0.5f);
+    const float glowRadBase = chSize * 1.2f;
+
+    float sanityFac = 1.f - (hallucinations * 0.65f);
+    const float vRad   = vRadBase   * sanityFac;
+    const float glowRad = glowRadBase * sanityFac;
     const float torchL = chSize * 7.f;
     const float torchW = 0.7f;
 
@@ -404,6 +457,19 @@ inline void initPlayer(sf::RenderWindow& window) {
         tx.translate(centre);
         tx.translate(en.enPos - p.pos);
 
+        bool shouldFlip = (en.type == Entities::LURKER ||
+                           en.type == Entities::HOLLOW ||
+                           en.type == Entities::HUSK   ||
+                           en.type == Entities::LEECH);
+        if (shouldFlip && !en.facingRight)
+            tx.scale({ -1.f, 1.f });
+
+        if (shouldFlip) {
+            float stepY = (en.animStep == 1) ? 2.f : 0.f;
+            float stepX = (en.animStep == 1) ? 1.f : -1.f;
+            tx.translate({ stepX, stepY });
+        }
+
         uint8_t aVal = alpha(en.enPos);
 
         for (size_t i = 0; i < en.entity.getVertexCount(); ++i) {
@@ -413,9 +479,7 @@ inline void initPlayer(sf::RenderWindow& window) {
                 col.a = aVal;
             }
             else if (en.type == Entities::STALKER) {
-                // Preserve camouflage: cap visible alpha at the spawn-time value (55),
-                // but still fade with lighting so it doesn't glow in the dark
-                uint8_t baseA = en.entity[i].color.a; // retains spawn alpha (55 body, ~95 eyes)
+                uint8_t baseA = en.entity[i].color.a;
                 col = sf::Color::White;
                 col.a = static_cast<uint8_t>(std::min(static_cast<int>(aVal), static_cast<int>(baseA)));
             }
@@ -427,8 +491,7 @@ inline void initPlayer(sf::RenderWindow& window) {
         }
 
         if (en.type == Entities::SHINING) {
-            float angle = std::sin(lWalked * 0.1f) * 15.f;
-            tx.rotate(sf::degrees(angle));
+            tx.rotate(sf::degrees(en.orbitAngle * (180.f / pi)));
         }
 
         if (aVal > 2) window.draw(en.entity, tx);
@@ -480,4 +543,38 @@ inline void initPlayer(sf::RenderWindow& window) {
     pDot.setPosition(centre);
     pDot.setFillColor(sf::Color::White);
     window.draw(pDot);
+
+    if (maxEntitySuspicion > 0.2f) {
+        bool chasing = (maxEntitySuspicion >= 1.5f);
+        float t = chasing
+            ? std::clamp((maxEntitySuspicion - 1.5f) / 3.5f, 0.f, 1.f)
+            : std::clamp((maxEntitySuspicion - 0.2f) / 1.3f, 0.f, 1.f);
+
+        uint8_t r = chasing ? static_cast<uint8_t>(110.f + t * 60.f) : 220;
+        uint8_t g = chasing ? static_cast<uint8_t>(8.f)               : 220;
+        uint8_t b = chasing ? static_cast<uint8_t>(8.f)               : 220;
+        uint8_t a = chasing ? static_cast<uint8_t>(30.f + t * 55.f)  : static_cast<uint8_t>(t * 28.f);
+
+        sf::Color edge(r, g, b, a);
+        sf::Color fade(r, g, b, 0);
+
+        float W  = static_cast<float>(window.getSize().x);
+        float H  = static_cast<float>(window.getSize().y);
+        float vW = W * 0.07f;
+        float vH = H * 0.09f;
+
+        auto drawStrip = [&](sf::Vector2f a0, sf::Vector2f a1,
+                             sf::Vector2f b0, sf::Vector2f b1,
+                             sf::Color cA, sf::Color cB) {
+            sf::VertexArray strip(sf::PrimitiveType::TriangleStrip, 4);
+            strip[0] = { a0, cA }; strip[1] = { b0, cB };
+            strip[2] = { a1, cA }; strip[3] = { b1, cB };
+            window.draw(strip);
+        };
+
+        drawStrip({0,0},   {0,H},   {vW,0},    {vW,H},    edge, fade);
+        drawStrip({W,0},   {W,H},   {W-vW,0},  {W-vW,H},  edge, fade);
+        drawStrip({0,0},   {W,0},   {0,vH},    {W,vH},    edge, fade);
+        drawStrip({0,H},   {W,H},   {0,H-vH},  {W,H-vH},  edge, fade);
+    }
 }

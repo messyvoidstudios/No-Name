@@ -47,8 +47,9 @@ inline int shield = 0; // Shield, max 1 (essentially +1 hp); ignored for Brutal
 inline bool torchOn = false; // Torch toggle (obviously)
 inline float battery = 100.f; // Torch battery (percentage)
 
-inline int sanity = 10; // Basic psychological horror mechanic, realistically
+inline float sanity = 10.f; // Basic psychological horror mechanic, realistically
 inline float sanityTimer = 0.f;
+inline float sanityGrace = 20.f; // Grace period (seconds) before passive sanity drain begins
 inline float hallucinations = 0.f; // Hallucinations ramp up with lower sanity, 1.f max
 inline float halluTimer = 0.f;
 
@@ -99,6 +100,7 @@ enum class Entities {
 
 inline bool isInitialising = true; // True only during the first rChunks call; suppresses camp spawning
 inline float spawnTimer = 0.f;
+inline float maxEntitySuspicion = 0.f;
 
 // Chunk variables
 enum class Chunks {

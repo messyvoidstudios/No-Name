@@ -100,6 +100,7 @@ int main() {
                 uPlayer(deltaTime);
                 uSanity(deltaTime);
                 uHallucinations(deltaTime, p.pos);
+                uHalluText(deltaTime, window);
 
                 uChunks(p.pos, deltaTime);
 
@@ -113,7 +114,7 @@ int main() {
                 window.clear(sf::Color(5, 5, 10));
 
                 spawnTimer += deltaTime;
-                if (spawnTimer >= 10.f) {
+                if (spawnTimer >= 25.f) {
                     sEntitiesCh();
                     spawnTimer = 0.f;
                 }
@@ -121,6 +122,8 @@ int main() {
                 dInventory(window);
                 dStats(window);
                 initPlayer(window);
+
+                dHalluText(window);
 
                 uBlinks(blink, deltaTime, window);
             }
